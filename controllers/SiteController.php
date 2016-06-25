@@ -22,18 +22,18 @@ class SiteController extends Controller
         return [
             'access' => [
                 'class' => AccessControl::className(),
-                'only' => ['logout'],
+                'only' => ['logout', 'login', 'signup', 'send-email', 'reset-password', 'contact-author'],
                 'rules' => [
                     [
-                        'actions' => ['logout'],
+                        'actions' => ['logout', 'send-email', 'reset-password', 'contact-author'],
                         'allow' => true,
                         'roles' => ['@'],
                     ],
-//                    [
-//                        'actions' => ['login'],
-//                        'allow' => false,
-//                        'roles' => ['?']
-//                    ]
+                    [
+                        'actions' => ['login', 'signup'],
+                        'allow' => true,
+                        'roles' => ['?']
+                    ]
                 ],
             ],
             'verbs' => [

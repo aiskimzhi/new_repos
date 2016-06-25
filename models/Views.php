@@ -65,7 +65,19 @@ class Views extends \yii\db\ActiveRecord
 
     public function countViews($advert_id)
     {
-        if (Views::findOne(['user_id' => Yii::$app->user->identity->getId(), 'advert_id' => $advert_id]) == null) {
+        if (Yii::$app->user->isGuest 
+            && Views::findOne(['user_id' => Yii::$app->request->userIP, 'advert_id' => $advert_id]) == null) {
+            $advert = Advert::findOne(['id' => $advert_id]);
+
+            $this->user_id = Yii::$app->request->userIP;
+            $this->advert_id = $advert_id;
+            if ($this->save() && $advert->save()) {
+                return true;
+            }
+        }
+
+        if (!Yii::$app->user->isGuest
+            && Views::findOne(['user_id' => Yii::$app->user->identity->getId(), 'advert_id' => $advert_id]) == null) {
             $advert = Advert::findOne(['id' => $advert_id]);
 
             if ($advert->user_id !== Yii::$app->user->identity->getId()) {

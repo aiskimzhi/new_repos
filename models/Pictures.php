@@ -6,15 +6,6 @@ use yii\helpers\Html;
 
 class Pictures extends Advert
 {
-    public function isDirExist($id)
-    {
-        if (file_exists('img/page_' . $id)) {
-            return true;
-        }
-
-        return false;
-    }
-
     public function fileList($id)
     {
         $list = scandir('img/page_' . $id);
@@ -46,26 +37,6 @@ class Pictures extends Advert
                 return $list;
             }
         }
-        return $list;
-    }
-
-    /**
-     * another variant of imgList($id).
-     * Necessary to check it
-     *
-     * @param $id
-     * @return array
-     */
-    public function myFunc($id)
-    {
-        $list = [];
-        if ($this->isDirExist($id) && $this->imageAmount($id)) {
-            $names = array_splice($this->fileList($id), 2, $this->imageAmount($id));
-            for ($i = 0; $i < $this->imageAmount($id); $i++) {
-                $list[$i] = '/img/page_' . $id . '/' . $names[$i];
-            }
-        }
-
         return $list;
     }
 

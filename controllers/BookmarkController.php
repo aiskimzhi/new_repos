@@ -9,6 +9,7 @@ use app\models\Region;
 use Yii;
 use app\models\Bookmark;
 use app\models\BookmarkSearch;
+use yii\filters\AccessControl;
 use yii\helpers\ArrayHelper;
 use yii\web\Controller;
 use yii\web\NotFoundHttpException;
@@ -25,6 +26,17 @@ class BookmarkController extends Controller
     public function behaviors()
     {
         return [
+            'access' => [
+                'class' => AccessControl::className(),
+                'only' => ['add-to-bookmarks', 'my-bookmarks', 'delete'],
+                'rules' => [
+                    [
+                        'actions' => ['add-to-bookmarks', 'my-bookmarks', 'delete'],
+                        'allow' => true,
+                        'roles' => ['@'],
+                    ],
+                ],
+            ],
             'verbs' => [
                 'class' => VerbFilter::className(),
                 'actions' => [

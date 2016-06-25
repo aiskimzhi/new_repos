@@ -43,6 +43,11 @@ class User extends ActiveRecord implements IdentityInterface
             [['first_name', 'last_name', 'email', 'password', 'phone', 'skype'], 'string', 'max' => 255],
             ['password_reset_token', 'string', 'max' => 64],
             ['password_reset_token', 'unique'],
+            [
+                ['first_name', 'last_name', 'email', 'phone', 'skype'], 'match',
+                'pattern' => '/<script>/', 'not' => true,
+                'message' => 'This field should not contain next symbols: ` ~ @ # $ % ^ & * / \\ < >',
+            ],
         ];
     }
 
@@ -88,14 +93,33 @@ class User extends ActiveRecord implements IdentityInterface
     }
 
     /**
-     * Validates entered password
-     *
-     * @param $password
-     * @return bool
+     * @return int
      */
-    public function validatePassword($password)
+    public function getId()
     {
-        return Yii::$app->security->validatePassword($password, $this->password);
+        return $this->id;
+    }
+
+    /**
+     * Gets current currency in DB
+     *
+     * @return string
+     */
+    public function getCurrency()
+    {
+        $user = User::findOne(['id' => Yii::$app->user->identity->getId()]);
+            
+        return $user->currency;
+    }
+
+    /**
+     * Generates Full Name to show in Logout
+     *
+     * @return string
+     */
+    public function getFullName()
+    {
+        return $this->first_name . ' ' . $this->last_name;
     }
 
     /**
@@ -109,50 +133,13 @@ class User extends ActiveRecord implements IdentityInterface
         return static::findOne(['email' => $email]);
     }
 
-    //Taken frm IdentityInterface
+    /**
+     * @param int|string $id
+     * @return null|static
+     */
     public static function findIdentity($id)
     {
         return static::findOne($id);
-    }
-
-    public static function findIdentityByAccessToken($token, $type = null)
-    {
-        return static::findOne(['access_token' => $token]);
-    }
-
-    public function getId()
-    {
-        return $this->id;
-    }
-
-    public function getPasswordResetToken()
-    {
-        return $this->password_reset_token;
-    }
-
-    public function validatePasswordResetToken($password_reset_token)
-    {
-        return $this->password_reset_token === $password_reset_token;
-    }
-
-    public function getAuthKey()
-    {
-        return true;
-    }
-
-    public function validateAuthKey($authkey)
-    {
-        return true;
-    }
-
-    /**
-     * Generates Full Name to show in Logout
-     *
-     * @return string
-     */
-    public function getFullName()
-    {
-        return $this->first_name . ' ' . $this->last_name;
     }
 
     /**
@@ -167,6 +154,17 @@ class User extends ActiveRecord implements IdentityInterface
     }
 
     /**
+     * Validates entered password
+     *
+     * @param $password
+     * @return bool
+     */
+    public function validatePassword($password)
+    {
+        return Yii::$app->security->validatePassword($password, $this->password);
+    }
+
+    /**
      * Generates password reset token
      */
     public function generatePasswordResetToken()
@@ -175,19 +173,32 @@ class User extends ActiveRecord implements IdentityInterface
     }
 
     /**
-     * Gets current currency in DB
-     *
      * @return string
      */
-    public function getCurrency()
+    public function getPasswordResetToken()
     {
-        $user = User::findOne(['id' => Yii::$app->user->identity->getId()]);
-
-        return $user->currency;
+        return $this->password_reset_token;
     }
 
+    /**
+     * @param $password_reset_token
+     * @return bool
+     */
+    public function validatePasswordResetToken($password_reset_token)
+    {
+        return $this->password_reset_token === $password_reset_token;
+    }
+
+    /**
+     * removes password_reset_token
+     */
     public function removePasswordResetToken()
     {
         $this->password_reset_token = null;
+    }
+
+    public function getAuthKey()
+    {
+        return true;
     }
 }

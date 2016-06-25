@@ -10,9 +10,20 @@ class UploadForm extends Model
 {
     public $imageFiles;
 
+    public function generateName($length = 16)
+    {
+        $characters = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
+        $charactersLength = strlen($characters);
+        $name = '';
+        for ($i = 0; $i < $length; $i++) {
+            $name .= $characters[rand(0, $charactersLength - 1)];
+        }
+        return $name;
+    }
+
     public function setName($id)
     {
-        return 'img/page_'.$id .'/'. Yii::$app->security->generateRandomString(16) . '_';
+        return 'img/page_'.$id .'/'. $this->generateName();
     }
 
     public function rules()

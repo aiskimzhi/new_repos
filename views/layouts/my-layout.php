@@ -37,8 +37,9 @@ AppAsset::register($this);
     ]);
     if (Yii::$app->user->isGuest) {
         $items = [
+            ['label' => 'Adverts', 'url' => ['/adverts']],
             ['label' => 'Login', 'url' => ['/site/login']],
-            ['label' => 'Sign Up', 'url' => ['/site/signup']]
+            ['label' => 'Sign Up', 'url' => ['/site/signup']],
         ];
     } else {
         for ($i = 0; $i < count(Yii::$app->params['currency']); $i++) {

@@ -20,9 +20,7 @@ class UserController extends Controller
         return [
             'access' => [
                 'class' => AccessControl::className(),
-                'only' => [
-                    'delete',
-                ],
+                'only' => ['delete-account', 'account', 'change-password', 'update-data', 'insert-currency'],
                 'rules' => [
                     [
                         'allow' => true,

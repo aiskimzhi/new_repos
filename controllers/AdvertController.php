@@ -16,6 +16,7 @@ use app\models\Views;
 use Yii;
 use app\models\Advert;
 use app\models\SearchAdvert;
+use yii\filters\AccessControl;
 use yii\helpers\ArrayHelper;
 use yii\helpers\Html;
 use yii\helpers\Json;
@@ -33,12 +34,23 @@ class AdvertController extends Controller
     public function behaviors()
     {
         return [
+            'access' => [
+                'class' => AccessControl::className(),
+                'only' => ['create', 'update', 'upload', 'delete', 'my-adverts'],
+                'rules' => [
+                    [
+                        'actions' => ['create', 'update', 'upload', 'delete', 'my-adverts'],
+                        'allow' => true,
+                        'roles' => ['@'],
+                    ],
+                ],
+            ],
             'verbs' => [
                 'class' => VerbFilter::className(),
                 'actions' => [
                     'delete' => ['post'],
                 ],
-            ],
+            ]
         ];
     }
 
@@ -81,6 +93,7 @@ class AdvertController extends Controller
             $beforeValue = Yii::$app->request->get('before');
             $afterValue = Yii::$app->request->get('after');
         }
+        
         return $this->render('index', [
             'searchModel' => $searchModel,
             'dataProvider' => $dataProvider,
@@ -107,18 +120,8 @@ class AdvertController extends Controller
         $upload = new UploadForm();
         $views = new Views();
 
-        $contacts = $model->getContacts($model->user_id, Yii::$app->user->identity->getId());
-        $contact = $model->contact($model->user_id, Yii::$app->user->identity->getId());
-
-        $isInBookmarks = Bookmark::find()->where([
-            'user_id' => Yii::$app->user->identity->getId(), 'advert_id' => $id
-        ])->all();
-
-        if (!empty($isInBookmarks)) {
-            $value = 'Delete ' . 'from bookmarks';
-        } else {
-            $value = 'Add to bookmarks';
-        }
+        $contacts = $model->getContacts($model->user_id);
+        $contact = $model->contact($model->user_id);
 
         $buttons = [
             'update' => '',
@@ -126,27 +129,40 @@ class AdvertController extends Controller
         ];
 
         $gallery = '_gallery';
+        $value = '';
 
-        if ($model->user_id == Yii::$app->user->identity->getId()) {
-            $buttons['update'] = Html::a('Update advert', ['update', 'id' => $model->id], [
-                'class' => 'btn btn-primary'
-            ]);
-            $buttons['delete'] = Html::a('Delete advert', ['delete', 'id' => $model->id], [
-                'class' => 'btn btn-danger',
-                'data' => [
-                    'confirm' => 'Are you sure you want to delete this advert?',
-                    'method' => 'post',
-                ],
-            ]);
+        if (!Yii::$app->user->isGuest) {
+            $isInBookmarks = Bookmark::find()->where([
+                'user_id' => Yii::$app->user->identity->getId(), 'advert_id' => $id
+            ])->all();
 
-            if (isset($_POST['delete_pic'])) {
-                $model->deletePic();
+            if (!empty($isInBookmarks)) {
+                $value = 'Delete ' . 'from bookmarks';
+            } else {
+                $value = 'Add to bookmarks';
             }
 
-            $gallery = '_my-gallery';
-        } else {
-            $views->countViews($_GET['id']);
+            if ($model->user_id == Yii::$app->user->identity->getId()) {
+                $buttons['update'] = Html::a('Update advert', ['update', 'id' => $model->id], [
+                    'class' => 'btn btn-primary'
+                ]);
+                $buttons['delete'] = Html::a('Delete advert', ['delete', 'id' => $model->id], [
+                    'class' => 'btn btn-danger',
+                    'data' => [
+                        'confirm' => 'Are you sure you want to delete this advert?',
+                        'method' => 'post',
+                    ],
+                ]);
+
+                if (isset($_POST['delete_pic'])) {
+                    $model->deletePic();
+                }
+
+                $gallery = '_my-gallery';
+            }
         }
+
+        $views->countViews($_GET['id']);
 
         return $this->render('view', [
             'model' => $model,
@@ -247,18 +263,11 @@ class AdvertController extends Controller
     public function actionUpload()
     {
         $model = new UploadForm();
-        
-        $advert = Advert::find()
-            ->where(['user_id' => Yii::$app->user->identity->getId()])
-            ->orderBy('id DESC')
-            ->asArray()
-            ->one();
-        $id = $advert['id'];
 
         if (Yii::$app->request->isPost) {
             $model->imageFiles = UploadedFile::getInstances($model, 'imageFiles');
-            if ($model->upload($id)) {
-                return $this->redirect('view?id=' . $id);
+            if ($model->upload(Advert::getId())) {
+                return $this->redirect('view?id=' . Advert::getId());
             }
         }
 
@@ -391,5 +400,14 @@ class AdvertController extends Controller
         }
 
         return $this->redirect('view?id=' . $id);
+    }
+
+    public function actionDate()
+    {
+        if (Advert::isDate($_POST['date'])) {
+            return 'form-inline form-control my-success hasDatepicker';
+        }
+
+        return 'form-inline form-control my-error hasDatepicker';
     }
 }
