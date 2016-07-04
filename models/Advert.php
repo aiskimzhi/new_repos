@@ -149,24 +149,16 @@ class Advert extends ActiveRecord
     }
 
     /**
-     * Creates new advert
-     *
+     * @param $attributes
      * @return Advert|null
      */
-    public function createAdvert()
+    public function createAdvert($attributes)
     {
         $currency = Currency::find()->where(['date' => 0])->asArray()->one();
         if ($this->validate()) {
             $advert = new Advert;
+            $advert->attributes = $attributes;
             $advert->user_id = Yii::$app->user->identity->getId();
-            $advert->category_id = $this->category_id;
-            $advert->subcategory_id = $this->subcategory_id;
-            $advert->region_id = $this->region_id;
-            $advert->city_id = $this->city_id;
-            $advert->title = $this->title;
-            $advert->text = $this->text;
-            $advert->price = $this->price;
-            $advert->currency = $this->currency;
             $advert->u_price = $this->price * $currency[$this->currency];
             $advert->created_at = time();
             $advert->updated_at = time();
@@ -176,50 +168,6 @@ class Advert extends ActiveRecord
             }
         }
         return null;
-    }
-
-    /**
-     * returns phone and skype of the user
-     *
-     * @param $userId
-     * @return mixed
-     */
-    public function getContacts($userId)
-    {
-        $user = User::findOne(['id' =>$userId]);
-        $notSet = '<span class="not-set">not set</span>';
-
-        if (Yii::$app->user->isGuest || $userId !== Yii::$app->user->identity->getId()) {
-            $contacts['Phone'] = empty($user->phone) ? '' : $user->phone;
-            $contacts['Skype'] = empty($user->skype) ? '' : $user->skype;
-        } else {
-            $contacts['Phone'] = empty($user->phone) ? $notSet : $user->phone;
-            $contacts['Skype'] = empty($user->skype) ? $notSet : $user->skype;
-        }
-
-        return $contacts;
-    }
-
-    /**
-     * returns e-mail or a link to contact the author by e-mail
-     * 
-     * @param $userId
-     * @return string
-     */
-    public function contact($userId)
-    {
-        $user = User::findOne(['id' =>$userId]);
-
-        if (Yii::$app->user->isGuest || $userId !== Yii::$app->user->identity->getId()) {
-            $contact = '<p class="contact">Contact the author: ' . $user->getFullName() . '</p>';
-            $contact .= '<p><a href="' . Url::toRoute(['site/contact-author', 'id' => $_GET['id']]) . '">
-                        <strong>Write an e-mail</strong></a></p>';
-        } else {
-            $contact = '<p class="contact">My contacts: </p>';
-            $contact .= '<p><strong>E-mail: </strong>' . $user->email . '</p>';
-        }
-
-        return $contact;
     }
 
     /**

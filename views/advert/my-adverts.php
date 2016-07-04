@@ -35,8 +35,8 @@ $this->title = 'My Adverts';
                 'value' => function($searchModel) {
                     $href = Url::toRoute('advert/view?id=') . $searchModel->id;
                     $text = '<div><strong class="advert-title"><a href="' .
-                        $href . '"><font color="#000000"> ' . $searchModel->title .
-                        '</font></a></strong></div>' . '<div>' . $searchModel->category->name .
+                        $href . '"><span style="color: #000"> ' . $searchModel->title .
+                        '</span></a></strong></div>' . '<div>' . $searchModel->category->name .
                         ' » ' . $searchModel->subcategory->name . '</div><br><br><div>' .
                         $searchModel->region->name . ', ' . $searchModel->city->name . '</div>' .
                         date(Yii::$app->params['dateFormat'], $searchModel->updated_at);

@@ -1,7 +1,6 @@
 <?php
 
 use app\models\Advert;
-use app\models\Currency;
 use yii\helpers\Html;
 use yii\grid\GridView;
 use yii\helpers\Url;
@@ -13,10 +12,10 @@ use yii\jui\DatePicker;
 /* @var $dataProvider yii\data\ActiveDataProvider */
 /* @var $regionList */
 /* @var $cityList */
-/* @var $disabled_city */
+/* @var $cityStatus */
 /* @var $catList */
 /* @var $subcatList */
-/* @var $disabled_subcat */
+/* @var $subcatStatus */
 /* @var $beforeValue */
 /* @var $afterValue */
 
@@ -58,7 +57,7 @@ $sortBy = [
         ])->dropDownList($cityList, [
                 'value' => 'null',
                 'prompt' => '- Choose a City -',
-                'disabled' => $disabled_city,
+                'disabled' => $cityStatus,
                 'style' => 'width: 100%;'
             ])->label(false) ?>
     </div>
@@ -86,7 +85,7 @@ $sortBy = [
         ])->dropDownList($subcatList, [
                 'value' => 'null',
                 'prompt' => '- Choose a Subcategory -',
-                'disabled' => $disabled_subcat,
+                'disabled' => $subcatStatus,
                 'style' => 'width: 100%;'
             ])->label(false) ?>
     </div>
@@ -172,8 +171,8 @@ $sortBy = [
                     'value' => function($searchModel) {
                         $href = Url::toRoute('advert/view?id=') . $searchModel->id;
                         $text = '<div><strong class="advert-title"><a href="' .
-                                $href . '"><font color="#000000"> ' . $searchModel->title .
-                                '</font></a></strong></div>' . '<div>' . $searchModel->category->name .
+                                $href . '"><span style="color: #000"> ' . $searchModel->title .
+                                '</span></a></strong></div>' . '<div>' . $searchModel->category->name .
                                 ' » ' . $searchModel->subcategory->name . '</div><br><br><div>' .
                                 $searchModel->region->name . ', ' . $searchModel->city->name . '</div>' .
                                 date(Yii::$app->params['dateFormat'], $searchModel->updated_at);

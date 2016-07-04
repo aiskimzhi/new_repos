@@ -38,8 +38,8 @@ $this->title = 'My Bookmarks';
                     'value' => function($data) {
                         $href = Url::toRoute('advert/view?id=') . $data->advert_id;
                         $text = '<div><strong class="advert-title"><a href="' .
-                            $href . '"><font color="#000000"> ' . $data->advert->title .
-                            '</font></a></strong></div>' . '<div>' . $data->advert->category->name .
+                            $href . '"><span style="color: #000000"> ' . $data->advert->title .
+                            '</span></a></strong></div>' . '<div>' . $data->advert->category->name .
                             ' » ' . $data->advert->subcategory->name . '</div><br><br><div>' .
                             $data->advert->region->name . ', ' . $data->advert->city->name . '</div>' .
                             date(Yii::$app->params['dateFormat'], $data->advert->updated_at);

@@ -3,7 +3,6 @@
 namespace app\controllers;
 
 use app\models\AdvertSearch;
-use app\models\Bookmark;
 use app\models\Category;
 use app\models\City;
 use app\models\Currency;
@@ -15,10 +14,8 @@ use app\models\User;
 use app\models\Views;
 use Yii;
 use app\models\Advert;
-use app\models\SearchAdvert;
 use yii\filters\AccessControl;
 use yii\helpers\ArrayHelper;
-use yii\helpers\Html;
 use yii\helpers\Json;
 use yii\web\Controller;
 use yii\web\ForbiddenHttpException;
@@ -61,29 +58,31 @@ class AdvertController extends Controller
      */
     public function actionIndex()
     {
-        $disabled_subcat = 'disabled';
-        $disabled_city = 'disabled';
+        $subcatStatus = true;
+//        $disabled_subcat = 'disabled';
+        $cityStatus = true;
+//        $disabled_city = 'disabled';
         $searchModel = new AdvertSearch();
         $dataProvider = $searchModel->search(Yii::$app->request->queryParams);
         $catList = ArrayHelper::map(Category::find()->asArray()->all(), 'id', 'name');
         $regionList = ArrayHelper::map(Region::find()->asArray()->all(), 'id', 'name');
         $subcatList = [];
         $cityList = [];
+        
+        if (Yii::$app->request->get('search') == 'search') {
+            if (Yii::$app->request->get('AdvertSearch')['category_id'] !== '') {
+                $subcatList = ArrayHelper::map(Subcategory::find()
+                    ->where(['category_id' => Yii::$app->request->get('AdvertSearch')['category_id']])
+                    ->asArray()->all(), 'id', 'name');
+                $subcatStatus = false;
+            }
 
-        if (Yii::$app->request->get('search') == 'search'
-            && Yii::$app->request->get('AdvertSearch')['category_id'] !== '') {
-            $subcatList = ArrayHelper::map(Subcategory::find()
-                ->where(['category_id' => Yii::$app->request->get('AdvertSearch')['category_id']])
-                ->asArray()->all(), 'id', 'name');
-            $disabled_subcat = false;
-        }
-
-        if (Yii::$app->request->get('search') == 'search'
-            && Yii::$app->request->get('AdvertSearch')['region_id'] !== '') {
-            $cityList = ArrayHelper::map(City::find()
-                ->where(['region_id' => Yii::$app->request->get('AdvertSearch')['region_id']])
-                ->asArray()->all(), 'id', 'name');
-            $disabled_city = false;
+            if (Yii::$app->request->get('AdvertSearch')['region_id'] !== '') {
+                $cityList = ArrayHelper::map(City::find()
+                    ->where(['region_id' => Yii::$app->request->get('AdvertSearch')['region_id']])
+                    ->asArray()->all(), 'id', 'name');
+                $cityStatus = false;
+            }
         }
 
         if (Yii::$app->request->get() == null || Yii::$app->request->get('period') == 'period') {
@@ -103,13 +102,14 @@ class AdvertController extends Controller
             'cityList' => $cityList,
             'beforeValue' => $beforeValue,
             'afterValue' => $afterValue,
-            'disabled_subcat' => $disabled_subcat,
-            'disabled_city' => $disabled_city,
+            'subcatStatus' => $subcatStatus,
+            'cityStatus' => $cityStatus,
         ]);
     }
 
     /**
      * Displays a single Advert model.
+     * 
      * @param integer $id
      * @return mixed
      */
@@ -119,61 +119,25 @@ class AdvertController extends Controller
         $pictures = new Pictures();
         $upload = new UploadForm();
         $views = new Views();
-
-        $contacts = $model->getContacts($model->user_id);
-        $contact = $model->contact($model->user_id);
-
-        $buttons = [
-            'update' => '',
-            'delete' => '',
-        ];
+        
 
         $gallery = '_gallery';
-        $value = '';
-
-        if (!Yii::$app->user->isGuest) {
-            $isInBookmarks = Bookmark::find()->where([
-                'user_id' => Yii::$app->user->identity->getId(), 'advert_id' => $id
-            ])->all();
-
-            if (!empty($isInBookmarks)) {
-                $value = 'Delete ' . 'from bookmarks';
-            } else {
-                $value = 'Add to bookmarks';
+        
+        if ($model->user_id == Yii::$app->user->identity->getId()) {
+            if (isset($_POST['delete_pic'])) {
+                $model->deletePic();
             }
 
-            if ($model->user_id == Yii::$app->user->identity->getId()) {
-                $buttons['update'] = Html::a('Update advert', ['update', 'id' => $model->id], [
-                    'class' => 'btn btn-primary'
-                ]);
-                $buttons['delete'] = Html::a('Delete advert', ['delete', 'id' => $model->id], [
-                    'class' => 'btn btn-danger',
-                    'data' => [
-                        'confirm' => 'Are you sure you want to delete this advert?',
-                        'method' => 'post',
-                    ],
-                ]);
-
-                if (isset($_POST['delete_pic'])) {
-                    $model->deletePic();
-                }
-
-                $gallery = '_my-gallery';
-            }
+            $gallery = '_my-gallery';
         }
 
         $views->countViews($_GET['id']);
 
         return $this->render('view', [
             'model' => $model,
-            'contacts' =>$contacts,
-            'contact' =>$contact,
-            'value' => $value,
-            'buttons' => $buttons,
             'pictures' => $pictures,
             'gallery' => $gallery,
             'upload' => $upload,
-            'views' => $views,
         ]);
     }
 
@@ -194,7 +158,7 @@ class AdvertController extends Controller
         $model = new Advert();
 
         if ($model->load(Yii::$app->request->post())) {
-            if ($model->createAdvert()) {
+            if ($model->createAdvert($_POST['Advert'])) {
                 return $this->redirect(['upload']);
             }
         }
@@ -221,10 +185,10 @@ class AdvertController extends Controller
             ->orderBy('id ASC')
             ->all();
 
-        if ($countSubcats > 0){
+        if ($countSubcats > 0) {
             echo '<option value="" selected="">- Choose a Subcategory -</option>';
-            foreach($subcats as $subcat){
-                echo "<option value='".$subcat->id."'>".$subcat->name."</option>";
+            foreach ($subcats as $subcat) {
+                echo "<option value='" . $subcat->id . "'>" . $subcat->name . "</option>";
             }
         } else {
             echo "<option></option>";
@@ -243,10 +207,10 @@ class AdvertController extends Controller
             ->orderBy('id ASC')
             ->all();
 
-        if($countCities>0){
+        if ($countCities > 0) {
             echo '<option value="">- Choose a City -</option>';
-            foreach($cities as $city){
-                echo "<option value='".$city->id."'>".$city->name."</option>";
+            foreach ($cities as $city) {
+                echo "<option value='" . $city->id . "'>" . $city->name . "</option>";
             }
         }
         else{
@@ -286,6 +250,7 @@ class AdvertController extends Controller
     public function actionUpdate($id)
     {
         $model = $this->findModel($id);
+        $currency = Currency::find()->where(['date' => 0])->asArray()->one();
         
         if ($model->user_id !== Yii::$app->user->identity->getId()) {
             throw new ForbiddenHttpException('You are allowed to update your adverts only.');
@@ -300,6 +265,7 @@ class AdvertController extends Controller
             ->where(['region_id' => $model->region_id])
             ->asArray()->all(), 'id', 'name');
         $model->updated_at = time();
+        $model->u_price = $_POST['Advert']['price'] * $currency[$_POST['Advert']['currency']];
         
         if ($model->load(Yii::$app->request->post()) && $model->save()) {
             return $this->redirect(['view', 'id' => $model->id]);

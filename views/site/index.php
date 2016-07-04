@@ -49,3 +49,12 @@ $this->title = 'Welcome!';
         <?php endforeach; ?>
     </div>
 </div>
+
+<?php
+
+$i = 0;
+while ($i < 5) {
+    ++$i;
+    echo '$i = ' . $i . '<br>';
+
+}
