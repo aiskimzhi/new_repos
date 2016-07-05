@@ -15,6 +15,7 @@ Thumbs.db
 # composer vendor dir
 /vendor
 controllers/hello.php
+controllers/folder
 
 # composer itself is not needed
 composer.phar
