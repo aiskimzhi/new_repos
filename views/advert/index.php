@@ -131,7 +131,7 @@ $sortBy = [
 
     <?php ActiveForm::end(); ?>
 </div>
-
+    
     <br>
     <div class="form-inline">
         <div class="form-group" style="width: 100%;">
